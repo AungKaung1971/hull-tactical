@@ -6,3 +6,18 @@ __pycache__/
 *.png
 *.parquet
 *.ipynb_checkpoints/
+
+# data or output folders
+data/
+outputs/
+outputs/*
+!outputs/.gitkeep
+outputs/plots/
+!outputs/plots/.gitkeep
+
+# artifacts
+*.csv
+*.parquet
+*.png
+*.pdf
+*.zip
