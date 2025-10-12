@@ -21,3 +21,7 @@ outputs/plots/
 *.png
 *.pdf
 *.zip
+
+# Ignore macOS system files
+.DS_Store
+data/.DS_Store
