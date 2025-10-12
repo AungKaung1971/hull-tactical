@@ -1,0 +1,29 @@
+paths:
+  train: data/train.csv
+  test: data/test.csv
+
+schema:
+  data_col: date_id
+  id_col: null
+  target_col: forward_returns
+
+features:
+  lags: [1, 2, 5, 10]
+  roll_windows: [5, 10, 20, 60]
+  usezscores: True
+  derive_simple_return_from: null
+
+training:
+  model_name: "ridge"
+  n_splits: 5
+  gap: 0i m
+  test_size: 0.2
+
+models:
+  ridge:
+    alpha: 1.0
+  hgbr:
+    learning_rate: 0.05
+    max_depth: 6
+    min_samples_leaf: 40
+    max_iter: 600
