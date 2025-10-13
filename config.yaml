@@ -3,20 +3,20 @@ paths:
   test: data/test.csv
 
 schema:
-  data_col: date_id
+  date_col: date_id
   id_col: null
   target_col: forward_returns
 
 features:
   lags: [1, 2, 5, 10]
   roll_windows: [5, 10, 20, 60]
-  usezscores: True
+  use_zscores: True
   derive_simple_return_from: null
 
 training:
   model_name: "ridge"
   n_splits: 5
-  gap: 0i m
+  gap: 0
   test_size: 0.2
 
 models:
