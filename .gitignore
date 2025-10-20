@@ -1,25 +1,23 @@
-#  dont pass generated stuff
-outputs/
-data/
+# General
 __pycache__/
-*.png
-*.parquet
 *.ipynb_checkpoints/
+.DS_Store
 
-# data or output folders
-data/
+# Outputs and generated artifacts
 outputs/
 outputs/*
 !outputs/.gitkeep
 outputs/plots/
 !outputs/plots/.gitkeep
 
-# artifacts
-*.parquet
+# Ignore generated or binary files
 *.png
+*.parquet
 *.pdf
 *.zip
 
-# Ignore macOS system files
-.DS_Store
-data/.DS_Store
+# Data
+# Ignore everything in data/ except CSVs and .gitkeep
+data/*
+!data/*.csv
+!data/.gitkeep
