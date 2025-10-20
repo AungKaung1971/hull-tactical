@@ -2,7 +2,6 @@
 outputs/
 data/
 __pycache__/
-*.csv
 *.png
 *.parquet
 *.ipynb_checkpoints/
