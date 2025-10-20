@@ -15,7 +15,6 @@ outputs/plots/
 !outputs/plots/.gitkeep
 
 # artifacts
-*.csv
 *.parquet
 *.png
 *.pdf
