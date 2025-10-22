@@ -21,7 +21,7 @@ training:
 
 models:
   ridge:
-    alpha: 1.0
+    alpha: 1
   hgbr:
     learning_rate: 0.05
     max_depth: 6
