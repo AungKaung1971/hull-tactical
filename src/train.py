@@ -39,7 +39,7 @@ X = X.fillna(X.mean())
 
 # train test split
 X_train, X_holdout, y_train, y_holdout = train_test_split(
-    X, y, test_size=test_size, random_state=67)
+    X, y, test_size=test_size, random_state=67, shuffle=False)
 
 # model selector
 model_name = cfg["training"]["model_name"]
@@ -95,3 +95,22 @@ for train_idx, val_idx in kf.split(X_train):
 
 print(f"Average CV RMSE: {cv_rmse:.6f}")
 print(f"Average CV IC: {cv_ic_mean:.4f} ± {cv_ic_std:.4f}")
+
+if model_name == "ridge":
+    final_alpha = cfg["models"]["ridge"]["alpha"]
+    final_model = Ridge(alpha=final_alpha)
+    final_model.fit(X_train, y_train)
+
+elif model_name == "hgbr":
+    final_hgbr_params = cfg["models"]["hgbr"]
+    final_model = HistGradientBoostingRegressor(
+        early_stopping=False, **final_hgbr_params)
+    final_model.fit(X_train, y_train)
+
+# evaluating hold outs ****** hide when training to prevent overfitting
+holdout_preds = final_model.predict(X_holdout)
+holdout_ic = np.corrcoef(y_holdout, holdout_preds)[0, 1]
+holdout_rmse = np.sqrt(mean_squared_error(y_holdout, holdout_preds))
+
+print(f"Holdout IC: {holdout_ic:.4f}")
+print(f"Holdout RMSE: {holdout_rmse:.6f}")

@@ -14,7 +14,7 @@ features:
   derive_simple_return_from: null
 
 training:
-  model_name: "hgbr"
+  model_name: "ridge"
   n_splits: 5
   gap: 0
   test_size: 0.2
