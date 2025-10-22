@@ -14,14 +14,14 @@ features:
   derive_simple_return_from: null
 
 training:
-  model_name: "ridge"
+  model_name: "hgbr"
   n_splits: 5
   gap: 0
   test_size: 0.2
 
 models:
   ridge:
-    alpha: 1.0
+    alpha: 1
   hgbr:
     learning_rate: 0.05
     max_depth: 6
