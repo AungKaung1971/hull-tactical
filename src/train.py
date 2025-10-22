@@ -6,6 +6,7 @@ from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_squared_error
 import joblib
 import os
+from sklearn.model_selection import TimeSeriesSplit
 
 # loading the config.yaml file into the script
 with open("config.yaml", "r") as f:
@@ -20,8 +21,11 @@ n_splits = cfg["training"]["n_splits"]
 df = pd.read_csv(train_path)
 print(f"Loaded train.csv with shape {df.shape}")
 
+# sorting it by date to ensure time series is protected
+df = df.sort_values(cfg["schema"]["date_col"]).reset_index(drop=True)
+
 # building features and defining a target
-drop_cols = [target_col]
+drop_cols = [target_col, "market_forward_excess_returns"]
 if cfg["schema"]["date_col"] in df.columns:
     drop_cols.append(cfg["schema"]["date_col"])
 
@@ -29,16 +33,16 @@ X = df.select_dtypes(include=[np.number]).drop(
     columns=drop_cols, errors="ignore")
 y = df[target_col].values
 
-# Handle missing values
+# handle missing values
 X = X.fillna(X.mean())
 
 # train test split
 X_train, X_holdout, y_train, y_holdout = train_test_split(
-    X, y, test_size=test_size, random_state=7)
+    X, y, test_size=test_size, random_state=67)
 
 
 # Cross_validation
-kf = KFold(n_splits=n_splits, shuffle=True, random_state=67)
+kf = TimeSeriesSplit(n_splits=n_splits)
 
 # initializing lists
 cv_ic_list = []
@@ -63,3 +67,5 @@ cv_ic_std = np.std(cv_ic_list)
 
 print(f"Average CV RMSE: {cv_rmse:.6f}")
 print(f"Average CV IC: {cv_ic_mean:.4f} ± {cv_ic_std:.4f}")
+
+print("Feature columns:", X.columns.tolist())
