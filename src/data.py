@@ -29,10 +29,53 @@ def load_csv_data(train_path: str, test_path: str) -> tuple[pd.DataFrame, pd.Dat
 
 def feature_columns(df: pd.DataFrame) -> list[str]:
     # cut down columns which dont have useful info
-    cols = []
+    col = []
     for col in df.columns:
         if col in LABEL_COLS or col in META_COLS:
             continue
-        cols.append(col)
-    return cols
+        col.append(col)
+    return col
 
+def deterministic_impute(train: pd.Dataframe, test: pd.Dataframe, feature_cols: list[str]) -> pd.DataFrame:
+    # get values to impute and fill with medians so its deterministic and using medians
+    stats = {}
+    train_impute = train.copy()
+    test_impute = test.copy()
+    for col in feature_cols:
+        median = train_impute[col].median()
+        if median == np.nan:
+            median = 0.0
+        train_impute[col] = train[col].fillna(median)
+        test_impute[col] = test[col].fillna(median)
+        stats[col] = median
+    return train_impute, test_impute
+
+def get_market_excess_returns(train: pd.Dataframe, feature_cols: list[str]) -> pd.Series:
+    for col in feature_cols:
+        # check if it exists
+        if col == train.columns:
+            return train[col].astype(float)
+        raise TypeError("market excess returns column not found")
+    
+def load_preds_clean(path: str) -> pd.DataFrame:
+    """ load model predictions from csv and ensure columns are correct
+    and that they are sorted in time"""
+    # read file from parquet(more efficient than csv)
+    parquet_file = pd.read_parquet(path)
+    expected_cols = {"date_id", "pred_excess"}
+    
+    # check if columns are correct
+    if expected_cols.issubset(parquet_file.columns) is False:
+        raise TypeError(f"predictions file at {path} does not have the right columns")
+    
+    # sort now by date_id and then reset index
+    parquet_file.sort_values("date_id", inplace=True)
+    parquet_file.reset_index(drop=True, inplace=True)
+
+    if "pred_conf" in parquet_file.columns:
+        parquet_file["pred_conf"] = parquet_file["pred_conf"].clip(lower=0.0, upper=1.0)
+        expected_cols.add("pred_conf")
+
+    df = parquet_file[list(expected_cols)] # turn to a list in case set order is different
+
+    return df   
