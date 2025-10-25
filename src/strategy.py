@@ -79,12 +79,50 @@ def preds2allocs(pred_excess: pd.Series, market: pd.Series,
             "vol_est": vol_est,
         })
 
+def apply_drawdown_brake(equity: pd.Series, alloc: pd.Series, config: SizingConfig) -> pd.Series:
+    """ apply drawdown brake to allocations if equity exceeds threshold
+    then hold drawn for a certain horizon"""
+    if not config.use_dd_brake:
+        return alloc
+    
+    alloc_adj = alloc.copy()
+    peak = equity.cummax()
+    drawdown = (peak / equity) - 1.0
 
+    brake_active = drawdown.rolling(config.dd_window).min() <= -config.dd_trigger
 
-# smooth the prediction so it doesnt jump day after day
-# limit how much it can change from day to day
+    active = 0
+    alloc_adj_vals = alloc_adj.to_numpy().copy()
+    for i, flag in enumerate(brake_active.values()):
+        if flag:
+            active = config.dd_horizon
+        if active > 0:
+            alloc_adj_vals[i] *= (1.0 - config.dd_reduction)
+            active -= 1
 
-# safety brake at the end
-# if prediction is more than 1.2x market voltatily, scale it down
-# maybe -> if portfolio loses too much money get out the game for a bit
+    return pd.Series(alloc_adj_vals, index=alloc.index).clip(0.0, 2.0)
+
+def cap_volatility(strategy_excess: pd.Series, market_excess: pd.Series, vol_cap_ratio: float = 1.2) -> float:
+    """ if the strategy excess returns higher than vol_cap_ratio then we get penalized greatly
+    therefore we have to minimize this risk by capping it
+    you minimize the whole allocation by a constant multiplier"""
+    # tradings days of the S&P 500
+    trade_days = 252
+
+    # annualize voltatilities
+    port_vol = strategy_excess.std(ddof=0) * np.sqrt(trade_days)
+    market_vol = market_excess.std(ddof=0) * np.sqrt(trade_days)
+
+    # if market vol is 0, then scaling would make no sense -> dont do it
+    if market_vol == 0.0:
+        return 1.0
+    
+    max_allowed_vol = vol_cap_ratio * market_vol # set up upper limit
+    # now check if capping is necessary
+    if port_vol <= max_allowed_vol or port_vol == 0.0:
+        return 1.0
+    
+    # calculate scale down factor
+    scale_down = max_allowed_vol / port_vol
+    return float(np.clip(scale_down, 0.0, 1.0))
  
