@@ -1,78 +1,60 @@
 import yaml
-import pandas as pd
 import numpy as np
-import joblib
+import pandas as pd
+from sklearn.model_selection import KFold, train_test_split
 from sklearn.linear_model import Ridge
+from sklearn.metrics import mean_squared_error
+import joblib
+import os
+from sklearn.model_selection import TimeSeriesSplit
 from sklearn.ensemble import HistGradientBoostingRegressor
 
-# --- Load config.yaml ---
-with open("config.yaml", "r") as f:
-    cfg = yaml.safe_load(f)
+# opening config.yaml
+with open("config.yaml") as r:
+    cfg = yaml.safe_load(r)
 
-# --- Paths & schema ---
-train_path = cfg["paths"]["train"]
+# acknowledging paths
 test_path = cfg["paths"]["test"]
-date_col = cfg["schema"]["date_col"]
-target_col = cfg["schema"]["target_col"]
+test_size = cfg["training"]["test_size"]
+
+# loading data and checkpoint
+df = pd.read_csv(test_path)
+print(f"Loaded test.csv with shape {df.shape}")
+
+# sort date so time series protected
+df = df.sort_values(cfg["schema"]["date_col"]).reset_index(drop=True)
+
+# defining coulmuns to be dropped and defining target
+drop_cols = ["market_forward_excess_returns", "risk_free_rate"]
+if cfg["schema"]["date_col"] in df.columns:
+    drop_cols.append(cfg["schema"]["date_col"])
+
+X = df.select_dtypes(include=[np.number]).drop(
+    columns=drop_cols, errors="ignore")
+
+X = X.fillna(X.mean())
+
+# loading trained model
 model_name = cfg["training"]["model_name"]
+model_path = f"models/{model_name}_model.joblib"
 
-# --- Load data ---
-train_df = pd.read_csv(train_path)
-test_df = pd.read_csv(test_path)
-print(f"Loaded train.csv ({train_df.shape}) and test.csv ({test_df.shape})")
+if not os.path.exists(model_path):
+    raise FileNotFoundError(f"model not found error file name: {model_path}")
+model = joblib.load(model_path)
+print(f"Loaded trained model: {model_path}")
 
-# --- Combine train + test for consistent feature creation ---
-df_all = pd.concat([train_df, test_df], ignore_index=True)
-df_all = df_all.sort_values(date_col).reset_index(drop=True)
+# make actual predictions
+if hasattr(model, "feature_names_in_"):
+    X = X[model.feature_names_in_]
 
-# --- Build features (same logic as in train.py) ---
-drop_cols = [target_col, "market_forward_excess_returns", "risk_free_rate"]
-if date_col in df_all.columns:
-    drop_cols.append(date_col)
+df["predicted_forward_returns"] = model.predict(X)
 
-X_all = df_all.select_dtypes(include=[np.number]).drop(
-    columns=drop_cols, errors="ignore")
-X_all = X_all.fillna(X_all.mean())
-
-# --- Split out test features ---
-X_test = X_all.iloc[len(train_df):].reset_index(drop=True)
-
-# --- Load trained model or reinstantiate it ---
-# Option A: if you've saved your trained model from train.py using joblib.dump()
-# model = joblib.load(f"models/{model_name}.joblib")
-
-# Option B: rebuild the same model using config params (since we haven't saved yet)
-if model_name == "ridge":
-    params = cfg["models"]["ridge"]
-    model = Ridge(**params)
-elif model_name == "hgbr":
-    params = cfg["models"]["hgbr"]
-    model = HistGradientBoostingRegressor(**params)
-else:
-    raise ValueError(f"Invalid model_name: {model_name}")
-
-# --- Fit model on the full train data ---
-# (we need this step since we didn’t save the model yet)
-drop_cols = [target_col, "market_forward_excess_returns", "risk_free_rate"]
-if date_col in train_df.columns:
-    drop_cols.append(date_col)
-
-X_train = train_df.select_dtypes(include=[np.number]).drop(
-    columns=drop_cols, errors="ignore")
-X_train = X_train.fillna(X_train.mean())
-y_train = train_df[target_col].values
-
-print(f"Training final {model_name} model on all train data...")
-model.fit(X_train, y_train)
-
-# --- Generate predictions on test data ---
-print("Generating predictions on test.csv...")
-test_preds = model.predict(X_test)
-test_df["prediction"] = test_preds
-
-# --- Save output for teammate ---
-output = test_df[[date_col, "prediction"]]
 os.makedirs("outputs", exist_ok=True)
-output.to_csv("outputs/predictions.csv", index=False)
-print("✅ Saved predictions.csv in outputs/ folder.")
-print(output.head())
+df[["date_id", "predicted_forward_returns"]].to_csv(
+    "outputs/predictions.csv", index=False)
+df[["date_id", "predicted_forward_returns"]].to_parquet(
+    "outputs/predictions.parquet", index=False)
+
+print("Predictions saved to: ")
+print("outputs/predictions.csv")
+print("outputs/predictions.parquet")
