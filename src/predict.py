@@ -35,7 +35,7 @@ X = df.select_dtypes(include=[np.number]).drop(
 X = X.fillna(X.mean())
 
 # loading trained model
-model_name = cfg["training"]["mdoel_name"]
+model_name = cfg["training"]["model_name"]
 model_path = f"models/{model_name}_model.joblib"
 
 if not os.path.exists(model_path):
@@ -44,6 +44,17 @@ model = joblib.load(model_path)
 print(f"Loaded trained model: {model_path}")
 
 # make actual predictions
+if hasattr(model, "feature_names_in_"):
+    X = X[model.feature_names_in_]
+
 df["predicted_forward_returns"] = model.predict(X)
 
 os.makedirs("outputs", exist_ok=True)
+df[["date_id", "predicted_forward_returns"]].to_csv(
+    "outputs/predictions.csv", index=False)
+df[["date_id", "predicted_forward_returns"]].to_parquet(
+    "outputs/predictions.parquet", index=False)
+
+print("Predictions saved to: ")
+print("outputs/predictions.csv")
+print("outputs/predictions.parquet")
