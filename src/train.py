@@ -9,6 +9,7 @@ import os
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.ensemble import HistGradientBoostingRegressor
 
+
 # loading the config.yaml file into the script
 with open("config.yaml", "r") as f:
     cfg = yaml.safe_load(f)
@@ -106,6 +107,12 @@ elif model_name == "hgbr":
     final_model = HistGradientBoostingRegressor(
         early_stopping=False, **final_hgbr_params)
     final_model.fit(X_train, y_train)
+
+# save trained model for prediction phase
+os.makedirs("models", exist_ok=True)
+model_filename = f"models/{model_name}_model.joblib"
+joblib.dump(final_model, model_filename)
+print(f"saved trained model to {model_filename}")
 
 # evaluating hold outs ****** hide when training to prevent overfitting
 holdout_preds = final_model.predict(X_holdout)
