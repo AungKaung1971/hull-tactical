@@ -80,7 +80,7 @@ def expanding_forward(
         equity_path.append(equity)
         records.append({
             "date_id": int(train["date_id"].iloc[i]),
-            "market_excess": r,
+            "market_excess": mkt_excess,
             "pred_excess": float(pred.iloc[i]),
             "pred_conf": float(conf.iloc[i]) if conf is not None else np.nan,
             "alloc": alloc,
