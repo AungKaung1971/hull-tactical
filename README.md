@@ -7,6 +7,27 @@ This repository contains two parts:
 2. Allocation mapping, backtesting, and final submission generation.
 
 
+## Competition Overview
+
+The Hull Tactical competition evaluates systematic equity trading strategies built on daily predictions of S&P 500 excess returns.
+
+Participants must:
+- Generate a daily **allocation value** in the range `[0, 2]` (0 = fully underweight, 2 = fully overweight).
+- Keep the **strategy's realized volatility** below **1.2x** the volatility of the S&P 500 benchmark.
+- Maximize a **Sharpe-like performance metric** over both a historical backtest period and a live forward evaluation window.
+
+The competition runs in two phases:
+1. **Backtest and submission review** (offline).
+2. **Live scoring** based on forward market data after submissions close.
+
+The goal is to produce predictions and allocation adjustments that are stable, interpretable, and robust to noisy financial time series.
+
+
+## About Us
+
+We, Alvaro Balbin and Aung Kaung, built this project because we are interested in how systematic trading strategies work in real financial markets. We approached this with speed and clarity: minimal theory overhead, focus on pipeline structure, signal reliability, and execution. We thought of it, designed it, and shipped the full pipeline quickly, while still ensuring it passes all competition requirements.
+
+
 ## Setup
 
 ```bash
