@@ -6,3 +6,5 @@ pyyaml
 joblib
 pyarrow
 jupyter
+pyyaml>=6.0.2    
+

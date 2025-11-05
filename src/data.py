@@ -58,17 +58,24 @@ def get_market_excess_returns(train: pd.Dataframe, feature_cols: list[str]) -> p
         raise TypeError("market excess returns column not found")
     
 def load_preds_clean(path: str) -> pd.DataFrame:
-    """ load model predictions from csv and ensure columns are correct
-    and that they are sorted in time"""
-    # read file from parquet(more efficient than csv)
+    """ load model predictions from parquet and ensure correct columns """
     parquet_file = pd.read_parquet(path)
+
+    # accept predicted_forward_returns instead of pred_excess
+    if "pred_excess" not in parquet_file.columns:
+        if "predicted_forward_returns" in parquet_file.columns:
+            parquet_file = parquet_file.rename(columns={"predicted_forward_returns": "pred_excess"})
+        else:
+            raise TypeError(
+                f"predictions file at {path} must contain either 'pred_excess' or 'predicted_forward_returns'"
+            )
+
     expected_cols = {"date_id", "pred_excess"}
-    
-    # check if columns are correct
-    if expected_cols.issubset(parquet_file.columns) is False:
+
+    # check required columns
+    if not expected_cols.issubset(parquet_file.columns):
         raise TypeError(f"predictions file at {path} does not have the right columns")
-    
-    # sort now by date_id and then reset index
+
     parquet_file.sort_values("date_id", inplace=True)
     parquet_file.reset_index(drop=True, inplace=True)
 
@@ -76,6 +83,6 @@ def load_preds_clean(path: str) -> pd.DataFrame:
         parquet_file["pred_conf"] = parquet_file["pred_conf"].clip(lower=0.0, upper=1.0)
         expected_cols.add("pred_conf")
 
-    df = parquet_file[list(expected_cols)] # turn to a list in case set order is different
+    df = parquet_file[list(expected_cols)]
+    return df
 
-    return df   

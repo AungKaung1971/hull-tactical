@@ -1,5 +1,3 @@
-# create user friendly cli interface to help create final csv, without writing extra code
-
 from __future__ import annotations
 import argparse
 
@@ -7,19 +5,19 @@ from .strategy import SizingConfig
 from .submit import submit_allocations
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument('train', required=True)
-    ap.add_argument('test', required=True)
-    ap.add_argument('preds_test', required=True)
+    ap = argparse.ArgumentParser(description="Create Hull Tactical submission.csv")
+    ap.add_argument("--train", required=True, help="Path to train.csv")
+    ap.add_argument("--test", required=True, help="Path to test.csv")
+    ap.add_argument("--preds_test", required=True, help="Path to test predictions parquet")
+    ap.add_argument("--out", default="outputs/submission.csv", help="Output CSV path")
 
-    ap.add_argument('--out', default='outputs/submission.csv')
-    ap.add_argument('--k', type=float, default=6)
-    ap.add_argument('--vol_span', type=int, default=21)
-    ap.add_argument('--alpha', type=float, default=0.5)
-    ap.add_argument('--tau', type=float, default=0.25)
-    ap.add_argument('--lam', type=float, default=0.5)
-    ap.add_argument('--use_conf', action='store_true')
-    # read what is inputted into CLI and args object stores instructions
+    ap.add_argument("--k", type=float, default=6)
+    ap.add_argument("--vol_span", type=int, default=21)
+    ap.add_argument("--alpha", type=float, default=0.5)
+    ap.add_argument("--tau", type=float, default=0.25)
+    ap.add_argument("--lam", type=float, default=0.5)
+    ap.add_argument("--use_conf", action="store_true")
+
     args = ap.parse_args()
 
     cfg = SizingConfig(
@@ -34,7 +32,6 @@ def main():
     submit_allocations(
         train_csv=args.train,
         test_csv=args.test,
-        preds_train_parquet=args.preds_train,
         preds_test_parquet=args.preds_test,
         out_path=args.out,
         cfg=cfg,

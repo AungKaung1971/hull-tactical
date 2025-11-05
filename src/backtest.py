@@ -51,7 +51,7 @@ def expanding_forward(
     # load model predictions
     if preds_parquet is not None:
         preds_df = load_preds_clean(preds_parquet)
-        df = pd.merge(train[["date_id"]], preds, on="date_id", how="left")
+        df = pd.merge(train[["date_id"]], preds_df, on="date_id", how="left")
         pred = df["pred_excess"].astype(float)
         conf = df["pred_conf"] if "pred_conf" in df.columns else None
     else:

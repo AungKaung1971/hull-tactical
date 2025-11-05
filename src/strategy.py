@@ -28,56 +28,58 @@ class SizingConfig:
     dd_horizon: int = 10 # how long to apply brake for
     dd_reduction: float = 0.5 # how much to reduce bet by during drawdown
 
+# pass prediction through squish function 
+def sigmoid(x: np.ndarray) -> np.ndarray:
+    return 1 / (1 + np.exp(-x))
+
 # first check out jumpy the market is right now
 # divide prediction by shakiness to get adjusted prediction
 def ewma_volatility(preds: pd.Series, span: int, market: pd.Series) -> pd.Series:
     mkt_squared = (market.fillna(0.0))**2
     var_ewma = mkt_squared.ewm(span=span, adjust=False, min_periods=span).mean()
     vol_mkt = np.sqrt(var_ewma)
-    vol = vol_mkt.replace(0.0, np.nan).fillna(method="ffill").fillna(1e-6)
-
+    vol = vol_mkt.replace(0.0, np.nan).ffill().fillna(1e-6)  # deprecation-safe
     return vol
 
-# pass prediction through squish function 
-def sigmoid(x: np.ndarray) -> np.ndarray:
-    return 1 / (1 + np.exp(-x))
-
-# map predictions to allocations
-def preds2allocs(pred_excess: pd.Series, market: pd.Series, 
-                 conf: pd.Series | None, config: SizingConfig) -> pd.Series:
-    """turn model predictions pred_excess into portfolio allocations
-    between 0 and 2"""
+def preds2allocs(pred_excess: pd.Series,
+                 market: pd.Series,
+                 conf: pd.Series | None,
+                 config: SizingConfig) -> pd.DataFrame:
+    """Turn model predictions into allocations in [0, 2]."""
     pred = pred_excess.astype(float).copy()
-    vol_est = ewma_volatility(pred, config.vol_span, market) # get market vol estimate
-    score = pred / vol_est # adjust prediction by market vol
 
-    alloc_sig = 2.0 * sigmoid(config.k * score) # map to [0, 2] using sigmoid
-    
-    # if model provides confidence, scale allocation by it
+    # normalize by market volatility
+    vol_est = ewma_volatility(pred, config.vol_span, market)
+    score = pred / vol_est
+
+    # base sigmoid mapping to [0, 2]
+    alloc_sig = 2.0 * sigmoid(config.k * score)
+
+    # optional confidence blend
     if config.use_conf and conf is not None:
-        conf = conf.clip(0.0, 1.0).fillna(0.0) # ensure conf is between 0 and 1
-        blend = config.lam + (1 - config.lam) * conf
-        alloc_sig = blend * alloc_sig + (1 - blend) * 1.0 # blend using config lam
+        conf = conf.clip(0.0, 1.0).fillna(0.0)
+        blend = config.lam + (1.0 - config.lam) * conf
+        alloc_sig = blend * alloc_sig + (1.0 - blend) * 1.0  # blend toward neutral 1.0
 
-        alloc = alloc_sig.copy() # have non-smoothed alloc for later use
-        prev = 1.0 # start from netural allocation so not risk averse but not risk seeking
-        output = []
-        for a in alloc_sig:
-            # smooth allocation using ema and then clamp
-            smoothed = config.alpha * a + (1 - config.alpha) * prev
-            sm_clamped = np.clip(smoothed, prev - config.tau, prev + config.tau) # prevent big jumps
-            sm_clipped = float(np.clip(sm_clamped, 0.0, 2.0)) # hard clip to [0, 2]
-            output.append(sm_clipped)
-            prev = sm_clipped
-        # reallocate after smoothing
-        alloc = pd.Series(output, index=pred.index)
+    # smooth and clamp changes day-to-day
+    prev = 1.0
+    out_vals = []
+    for a in alloc_sig:
+        smoothed = config.alpha * a + (1.0 - config.alpha) * prev
+        sm_clamped = np.clip(smoothed, prev - config.tau, prev + config.tau)
+        sm_clipped = float(np.clip(sm_clamped, 0.0, 2.0))
+        out_vals.append(sm_clipped)
+        prev = sm_clipped
 
-        return pd.DataFrame({
-            "alloc": alloc,
-            "alloc_unsmoothed": alloc_sig,
-            "pred_adjusted": score,
-            "vol_est": vol_est,
-        })
+    alloc = pd.Series(out_vals, index=pred.index)
+
+    return pd.DataFrame({
+        "alloc": alloc,
+        "alloc_unsmoothed": alloc_sig,
+        "pred_adjusted": score,
+        "vol_est": vol_est,
+    })
+
 
 def apply_drawdown_brake(equity: pd.Series, alloc: pd.Series, config: SizingConfig) -> pd.Series:
     """ apply drawdown brake to allocations if equity exceeds threshold
