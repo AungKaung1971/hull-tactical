@@ -29,59 +29,40 @@ data/test.csv
 ```
 
 
-## Part 1: Model (Feature Engineering, Training, Prediction)
+## Part 1: Model (Training + Prediction)
 
-Features:
-- Lagged returns: 1, 2, 3, 5 days
-- Rolling means: 5, 10, 20 days
-
-Models:
-- Ridge Regression (baseline)
-- HistGradientBoostingRegressor (nonlinear)
-
-Evaluation:
-- TimeSeriesSplit (no leakage)
-- Metrics: IC and RMSE
-
-Prediction output format:
-```
-date_id,predicted_forward_returns
-...
+Train the model:
+```bash
+python train.py
 ```
 
-These predictions are used in the backtesting step.
+Generate predictions:
+```bash
+python predict.py
+```
+
+This should produce:
+```
+data/pred_train.parquet
+data/preds_test.parquet
+```
 
 
 ## Part 2: Backtesting and Submission
 
-### 1. Generate OOF and Test Predictions
+Run backtest:
 ```bash
-python -m src.make_baseline_preds_cli \
-  --train data/train.csv \
-  --test data/test.csv \
-  --oof_out data/pred_train.parquet \
-  --test_out data/preds_test.parquet
+python backtest.py
 ```
 
-### 2. Run Backtest on Training Period
+Generate submission file:
 ```bash
-python -m src.backtest_cli \
-  --train data/train.csv \
-  --preds data/pred_train.parquet \
-  --out outputs
-```
-
-### 3. Create Submission File
-```bash
-python -m src.submit_cli \
-  --train data/train.csv \
-  --test data/test.csv \
-  --preds_test data/preds_test.parquet \
-  --out outputs/submission.csv
+python submit.py
 ```
 
 Final output format:
 ```
+outputs/submission.csv
 date_id,allocation
 ...
 ```
