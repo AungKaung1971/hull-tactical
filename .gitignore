@@ -4,11 +4,7 @@ __pycache__/
 .DS_Store
 
 # Outputs and generated artifacts
-outputs/
-outputs/*
-!outputs/.gitkeep
-outputs/plots/
-!outputs/plots/.gitkeep
+
 
 # Ignore generated or binary files
 *.png
