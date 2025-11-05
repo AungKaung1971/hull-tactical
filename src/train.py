@@ -52,7 +52,8 @@ if model_name == "ridge":
 elif model_name == "hgbr":
     def make_model():
         para = cfg["models"]["hgbr"]
-        return HistGradientBoostingRegressor(**para)
+        return HistGradientBoostingRegressor(random_state=67, **para)
+
 
 else:
     raise ValueError(f"Not a valid model: {model_name}")
@@ -89,13 +90,13 @@ for train_idx, val_idx in kf.split(X_train):
         ic = 0.0
     cv_ic_list.append(ic)
 
-    cv_rmse = np.mean(cv_rmse_list)
-
-    cv_ic_mean = np.mean(cv_ic_list)
-    cv_ic_std = np.std(cv_ic_list)
+cv_rmse = np.mean(cv_rmse_list)
+cv_ic_mean = np.mean(cv_ic_list)
+cv_ic_std = np.std(cv_ic_list)
 
 print(f"Average CV RMSE: {cv_rmse:.6f}")
 print(f"Average CV IC: {cv_ic_mean:.4f} ± {cv_ic_std:.4f}")
+
 
 if model_name == "ridge":
     final_alpha = cfg["models"]["ridge"]["alpha"]

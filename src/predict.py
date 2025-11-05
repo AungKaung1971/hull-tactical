@@ -13,12 +13,28 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 with open("config.yaml") as r:
     cfg = yaml.safe_load(r)
 
+# adding data set selection for reproducability
+model_selector = int(input("""Please select your data set:
+                       1) train.csv
+                       2) test.csv
+                       => """))
+
 # acknowledging paths
+train_path = cfg["paths"]["train"]
 test_path = cfg["paths"]["test"]
 test_size = cfg["training"]["test_size"]
 
+if model_selector == 1:
+    chosen_path = train_path
+
+elif model_selector == 2:
+    chosen_path = test_path
+
+else:
+    raise ValueError("Invalid Choice")
+
 # loading data and checkpoint
-df = pd.read_csv(test_path)
+df = pd.read_csv(chosen_path)
 print(f"Loaded test.csv with shape {df.shape}")
 
 # sort date so time series protected
