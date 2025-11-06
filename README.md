@@ -37,7 +37,7 @@ Focus:
 
 The project was built quickly and intentionally with minimal unnecessary complexity.
 
-### 📹 Demonstration
+### Demonstration
 
 The system works as intended. A demonstration video is available here:
 
