@@ -47,7 +47,7 @@ Expected input data:
     data/test.csv
 
 
-## Part 1 — Model Training and Prediction
+## Part 1 - Model Training and Prediction
 
 Train the model:
     
@@ -62,7 +62,7 @@ This produces:
     outputs/predictions.parquet
 
 
-## Part 2 — Backtesting
+## Part 2 - Backtesting
 
 Run backtest:
     
@@ -78,7 +78,7 @@ Outputs:
     outputs/plots/
 
 
-## Part 3 — Submission Generation
+## Part 3 - Submission Generation
 
 Generate final submission file:
     
