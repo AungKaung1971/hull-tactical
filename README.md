@@ -37,6 +37,18 @@ Focus:
 
 The project was built quickly and intentionally with minimal unnecessary complexity.
 
+### Demonstration
+
+We have a demonstration of us explaining what we did and running the code showing it working:
+
+**`public/Hull_Tactical_Competition.mp4`**
+
+<video src="./public/Hull_Tactical_Competition.mp4" controls width="600">
+  Your browser does not support the video tag.
+</video>
+
+
+
 
 ## Setup
 
