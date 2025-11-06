@@ -37,17 +37,11 @@ Focus:
 
 The project was built quickly and intentionally with minimal unnecessary complexity.
 
-### Demonstration
+### 📹 Demonstration
 
-We have a demonstration of us explaining what we did and running the code showing it working:
+The system works as intended. A demonstration video is available here:
 
-**`public/Hull_Tactical_Competition.mp4`**
-
-<video src="./public/Hull_Tactical_Competition.mp4" controls width="600">
-  Your browser does not support the video tag.
-</video>
-
-
+[![Demo Video](https://img.youtube.com/vi/mQCyDRs_Zlw/0.jpg)](https://youtu.be/mQCyDRs_Zlw)
 
 
 ## Setup
